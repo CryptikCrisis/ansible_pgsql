@@ -1,0 +1,92 @@
+---
+# tasks file for common
+- name: common system config
+  tags: common_system_config
+  block:
+
+    - name: Set timezone
+      community.general.timezone:
+        name: Australia/Sydney
+
+    - name: Install Common Packages
+      ansible.builtin.dnf:
+        name: firewalld, python3-firewall, tuned, lvm2
+        state: present
+
+    - name: Start firewalld
+      ansible.builtin.systemd_service:
+        name: firewalld
+        state: started
+        enabled: true
+    
+    - name: enable postgresql firewall rule
+      ansible.posix.firewalld:
+        service: postgresql
+        state: enabled
+        permanent: yes
+        immediate: yes
+
+- name: Provision data disk
+  tags: create_disk
+  block:
+        
+    - name: create the /opt folder to mount to
+      ansible.builtin.file:
+        path: /opt
+        state: directory
+        mode: 0755
+        owner: root
+        group: root
+
+    - name: Create a volume group on top of /dev/sda
+      community.general.lvg:
+        pvs: /dev/sda
+        pvresize: true
+        state: present
+        vg: pgsql
+
+    - name: Create a logical volume for pgsql data
+      community.general.lvol:
+        lv: pgsql_data
+        vg: pgsql        
+        size: 149.99G
+        active: true
+        state: present
+    
+    - name: Create a xfs filesystem on the logical volume
+      community.general.filesystem:
+        fstype: xfs
+        dev: /dev/mapper/pgsql-pgsql_data
+        state: present
+
+    - name: Get data disk UUID
+      ansible.builtin.command:
+        cmd: blkid --match-tag UUID --output value /dev/mapper/pgsql-pgsql_data
+      register: data_disk_UUID
+
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: data_disk_UUID.stdout_lines
+        verbosity: 2
+    
+    - name: add entry to fstab
+      ansible.posix.mount:
+        path: /opt
+        src: UUID={{ data_disk_UUID.stdout }}
+        boot: true
+        fstype: xfs
+        state: mounted
+        opts: defaults
+
+    - name: Relabel SELinux on the new drive
+      ansible.builtin.command:
+        cmd: /sbin/restorecon -R -v /opt
+    
+    - name: Reboot machine and send a message
+      ansible.builtin.reboot:
+        msg: "Rebooting machine in 5 seconds"
+      #ansible.builtin.lineinfile:
+      #  path: /etc/fstab
+      #  line: 'UUID={{ data_disk UUID }}     /opt    xfs     defaults        0       0'
+      #  state: present
+      #  insertafter: EOF

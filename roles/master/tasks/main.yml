@@ -1,0 +1,60 @@
+---
+# tasks file for master
+- name: Install Postgresql packages
+  ansible.builtin.dnf:
+    name: postgresql-server, postgresql-contrib, postgresql
+    state: present
+
+- name: create the postgresql installation folder
+  ansible.builtin.file:
+    path: /opt/postgresql
+    state: directory
+    mode: 0755
+    owner: postgres
+    group: root
+
+- name: Register state install state so future runs of this role do not re-install PostgreSQL if already installed
+  ansible.builtin.stat:
+    path: /opt/postgresql/data/pg_hba.conf
+  register: postgres_data
+
+- name: Initialise PostgreSQL if not already installed
+  tags: postgres_initdb
+  ansible.builtin.command:
+    cmd: sudo su --command 'pg_ctl initdb --pgdata=/opt/postgresql/data' --login postgres
+  when: not postgres_data.stat.exists
+
+- name: set selinux postgresql permissions on /opt/postgresql
+  ansible.builtin.command:
+    cmd: sudo chcon -Rt postgresql_db_t /opt/postgresql
+
+- name: Install service file for postgresql
+  ansible.builtin.copy:
+    src: files/postgresql-13.service
+    dest: /etc/systemd/system/postgresql-13.service
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+
+- name: Reload systemd
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Enable and start postgresql
+  ansible.builtin.systemd_service:
+    name: postgresql-13
+    state: started
+    enabled: true
+    masked: no
+
+- name: Secure the postgresql installation
+  block:
+
+    - name: Set password encryption to SCRAM-SHA-256
+      ansible.builtin.lineinfile:
+      path: /opt/postgresql/data/postgresql.conf
+      regex: password_encryption = scram-sha-256
+    
+    - name: enable SSL
+
+    - name: 

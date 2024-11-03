@@ -1,0 +1,18 @@
+[Unit]
+Description=PostgreSQL database server
+Documentation=man:postgres(1)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Environment=PGDATA=/opt/postgresql/data
+Type=forking
+User=postgres
+Group=postgres
+ExecStart=pg_ctl -D ${PGDATA} start
+ExecReload=pg_ctl -D ${PGDATA} restart
+ExecStop=pg_ctl -D ${PGDATA} stop
+TimeoutSec=600
+
+[Install]
+WantedBy=multi-user.target

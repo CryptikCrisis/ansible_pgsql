@@ -1,0 +1,5 @@
+---
+      #    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+become: yes
+gather_facts: yes
+remote_user: cloud-user
