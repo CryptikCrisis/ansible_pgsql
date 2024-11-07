@@ -1,6 +1,6 @@
 ---
 # tasks file for common
-- name: common system config
+- name: Common system config
   tags: common_system_config
   block:
 
@@ -18,29 +18,29 @@
         name: firewalld
         state: started
         enabled: true
-    
-    - name: enable postgresql firewall rule
+
+    - name: Enable postgresql firewall rule
       ansible.posix.firewalld:
         service: postgresql
         state: enabled
-        permanent: yes
-        immediate: yes
+        permanent: true
+        immediate: true
 
 - name: Provision data disk
   tags: create_disk
   block:
-        
-    - name: create the /opt folder to mount to
+
+    - name: Create the folder to mount to
       ansible.builtin.file:
-        path: /opt
+        path: "{{ data_disk_path }}"
         state: directory
-        mode: 0755
+        mode: "0755"
         owner: root
         group: root
 
-    - name: Create a volume group on top of /dev/sda
+    - name: Create a volume group on top of the physical data disk
       community.general.lvg:
-        pvs: /dev/sda
+        pvs: "{{ data_disk_physical }}"
         pvresize: true
         state: present
         vg: pgsql
@@ -48,11 +48,11 @@
     - name: Create a logical volume for pgsql data
       community.general.lvol:
         lv: pgsql_data
-        vg: pgsql        
+        vg: pgsql
         size: 149.99G
         active: true
         state: present
-    
+
     - name: Create a xfs filesystem on the logical volume
       community.general.filesystem:
         fstype: xfs
@@ -63,15 +63,16 @@
       ansible.builtin.command:
         cmd: blkid --match-tag UUID --output value /dev/mapper/pgsql-pgsql_data
       register: data_disk_UUID
+      changed_when: false
 
     - name: Print return information from the previous task
       ansible.builtin.debug:
         var: data_disk_UUID.stdout_lines
         verbosity: 2
     
-    - name: add entry to fstab
+    - name: Add entry to fstab
       ansible.posix.mount:
-        path: /opt
+        path: "{{ data_disk_path }}"
         src: UUID={{ data_disk_UUID.stdout }}
         boot: true
         fstype: xfs
@@ -80,8 +81,8 @@
 
     - name: Relabel SELinux on the new drive
       ansible.builtin.command:
-        cmd: /sbin/restorecon -R -v /opt
-    
+        cmd: /sbin/restorecon -R -v {{ data_disk_path | quote }}
+
     - name: Reboot machine and send a message
       ansible.builtin.reboot:
         msg: "Rebooting machine in 5 seconds"

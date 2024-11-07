@@ -5,28 +5,28 @@
     name: postgresql-server, postgresql-contrib, postgresql
     state: present
 
-- name: create the postgresql installation folder
+- name: Create the postgresql installation folder
   ansible.builtin.file:
-    path: /opt/postgresql
+    path: "{{ data_disk_path + postgresql_path }}"
     state: directory
-    mode: 0755
+    mode: "0755"
     owner: postgres
     group: root
 
 - name: Register state install state so future runs of this role do not re-install PostgreSQL if already installed
   ansible.builtin.stat:
-    path: /opt/postgresql/data/pg_hba.conf
+    path: "{{ data_disk_path + postgresql_path + /pg_hba.conf }}"
   register: postgres_data
 
 - name: Initialise PostgreSQL if not already installed
   tags: postgres_initdb
   ansible.builtin.command:
-    cmd: sudo su --command 'pg_ctl initdb --pgdata=/opt/postgresql/data' --login postgres
+    cmd: sudo su --command 'pg_ctl initdb --pgdata={{ data_disk_path + postgresql_path }}' --login postgres
   when: not postgres_data.stat.exists
 
-- name: set selinux postgresql permissions on /opt/postgresql
+- name: set selinux postgresql permissions on postgresql root folder
   ansible.builtin.command:
-    cmd: sudo chcon -Rt postgresql_db_t /opt/postgresql
+    cmd: sudo chcon -Rt postgresql_db_t {{ data_disk_path + postgresql_root }}
 
 - name: Install service file for postgresql
   ansible.builtin.copy:
@@ -52,9 +52,5 @@
 
     - name: Set password encryption to SCRAM-SHA-256
       ansible.builtin.lineinfile:
-      path: /opt/postgresql/data/postgresql.conf
-      regex: password_encryption = scram-sha-256
-    
-    - name: enable SSL
-
-    - name: 
+        path: "{{ data_disk_path + postgresql_path + /postgresql.conf }}"
+        regex: password_encryption = scram-sha-256
