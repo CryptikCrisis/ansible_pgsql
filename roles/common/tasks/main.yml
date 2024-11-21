@@ -8,6 +8,16 @@
       community.general.timezone:
         name: Australia/Sydney
 
+    - name: Register with Red Hat Account
+      community.general.redhat_subscription:
+        state: present
+        activationkey: activation-key-default
+        org_id: 13951093
+
+    - name: Register to Red Hat insights
+      ansible.builtin.command:
+        cmd: insights-client --register
+
     - name: Install Common Packages
       ansible.builtin.dnf:
         name: firewalld, python3-firewall, tuned, lvm2

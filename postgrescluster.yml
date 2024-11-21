@@ -1,9 +1,9 @@
 ---
-- hosts: all
 - name: Set up common environment
+  hosts: all
   roles:
     - common
-- hosts: master
-- name: Set up postgresql master server
-  roles:
-    - master
+#- hosts: master
+#- name: Set up postgresql master server
+#  roles:
+#    - master

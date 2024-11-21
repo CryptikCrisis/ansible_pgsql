@@ -13,18 +13,18 @@
     owner: postgres
     group: root
 
-- name: Register state install state so future runs of this role do not re-install PostgreSQL if already installed
+- name: Check whether postgresql is already installed in the target path.
   ansible.builtin.stat:
-    path: "{{ data_disk_path + postgresql_path + /pg_hba.conf }}"
+    path: "{{ data_disk_path + postgreql_root + postgresql_path }}/pg_hba.conf"
   register: postgres_data
 
 - name: Initialise PostgreSQL if not already installed
   tags: postgres_initdb
   ansible.builtin.command:
-    cmd: sudo su --command 'pg_ctl initdb --pgdata={{ data_disk_path + postgresql_path }}' --login postgres
+    cmd: sudo su --command 'pg_ctl initdb --pgdata={{ data_disk_path + postgresql_root + postgresql_path }}' --login postgres
   when: not postgres_data.stat.exists
 
-- name: set selinux postgresql permissions on postgresql root folder
+- name: Set selinux postgresql permissions on postgresql root folder
   ansible.builtin.command:
     cmd: sudo chcon -Rt postgresql_db_t {{ data_disk_path + postgresql_root }}
 
@@ -45,12 +45,12 @@
     name: postgresql-13
     state: started
     enabled: true
-    masked: no
+    masked: false
 
 - name: Secure the postgresql installation
   block:
 
     - name: Set password encryption to SCRAM-SHA-256
       ansible.builtin.lineinfile:
-        path: "{{ data_disk_path + postgresql_path + /postgresql.conf }}"
+        path: "{{ data_disk_path + postgresql_root + postgresql_path }}/postgresql.conf"
         regex: password_encryption = scram-sha-256
