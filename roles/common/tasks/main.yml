@@ -11,8 +11,8 @@
     - name: Register with Red Hat Account
       community.general.redhat_subscription:
         state: present
-        activationkey: activation-key-default
-        org_id: 13951093
+        activationkey: changeme
+        org_id: changeme
 
     - name: Register to Red Hat insights
       ansible.builtin.command:
@@ -96,8 +96,3 @@
     - name: Reboot machine and send a message
       ansible.builtin.reboot:
         msg: "Rebooting machine in 5 seconds"
-      #ansible.builtin.lineinfile:
-      #  path: /etc/fstab
-      #  line: 'UUID={{ data_disk UUID }}     /opt    xfs     defaults        0       0'
-      #  state: present
-      #  insertafter: EOF
