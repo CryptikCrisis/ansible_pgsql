@@ -108,8 +108,3 @@
     - name: Reboot machine and send a message
       ansible.builtin.reboot:
         msg: "Rebooting machine in 5 seconds"
-      #ansible.builtin.lineinfile:
-      #  path: /etc/fstab
-      #  line: 'UUID={{ data_disk UUID }}     /opt    xfs     defaults        0       0'
-      #  state: present
-      #  insertafter: EOF

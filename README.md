@@ -4,14 +4,15 @@ This is an ansible role set that configures a master and standby active/passive 
 
 This role assumes the following:
 
-1. The operating system in use is RHEL 9.x
-2. The base RHEL subscription repositories are used
-3. The data drive is 150GB
-4. The data drive is located at /dev/sda
-5. The data drive will be mounted to /opt for PostgreSQL
-6. The PostgreSQL installation path is /opt/postgresql/data
-7. PostgreSQL 13 is the version to be installed
-8. SELinux is enforcing
+1. The ansible host has the community.general and ansible.posix galaxy collections installed
+2. The operating system in use is RHEL 9.x
+3. The base RHEL subscription repositories are used
+4. The data drive is 150GB
+5. The data drive is located at /dev/sda
+6. The data drive will be mounted to /opt for PostgreSQL
+7. The PostgreSQL installation path is /opt/postgresql/data
+8. PostgreSQL 16 is the version to be installed
+9. SELinux is enforcing
 
 Based on these assumptions the roles produce an installation that is
 
