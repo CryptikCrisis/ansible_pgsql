@@ -1,12 +1,13 @@
 [Unit]
-Description=PostgreSQL database server
+Description=PostgreSQL 16 database server
 Documentation=man:postgres(1)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Environment=PGDATA=/opt/postgresql/data
-Type=forking
+Environment=PGLOG=/opt/postgresql/data/pgstartup.log
+Type=notify
 User=postgres
 Group=postgres
 ExecStart=pg_ctl -D ${PGDATA} start

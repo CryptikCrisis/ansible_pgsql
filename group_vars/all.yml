@@ -5,4 +5,4 @@ data_disk_physical: /dev/sda
 data_disk_path: /opt
 postgresql_root: /postgresql
 postgresql_path: /data
-postgres_pass: 3+LDz81NbLG4CP0htRp3+A==
+#postgres_pass: 3+LDz81NbLG4CP0htRp3+A==

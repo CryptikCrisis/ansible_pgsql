@@ -8,15 +8,27 @@
       community.general.timezone:
         name: Australia/Sydney
 
+    - name: Check if server is already registered with a Red Hat Account
+      ansible.builtin.command:
+        cmd: 'subscription-manager register'
+      register: subscription_status
+      failed_when: false
+
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: subscription_status.stdout_lines
+        verbosity: 1
+
     - name: Register with Red Hat Account
       community.general.redhat_subscription:
         state: present
         activationkey: activation-key-default
         org_id: 13951093
+        release: 9.4
 
-    - name: Register to Red Hat insights
-      ansible.builtin.command:
-        cmd: insights-client --register
+#    - name: Register to Red Hat insights
+#      ansible.builtin.command:
+#        cmd: insights-client --register
 
     - name: Install Common Packages
       ansible.builtin.dnf:

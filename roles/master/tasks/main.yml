@@ -2,10 +2,11 @@
 # tasks file for master
 - name: Install Postgresql packages
   ansible.builtin.dnf:
-    name: postgresql-server, postgresql-contrib, postgresql
+    name: 
+    - '@postgresql:16'
     state: present
 
-- name: Create the postgresql installation folder
+- name: Create the postgresql installation folder.
   ansible.builtin.file:
     path: "{{ data_disk_path + postgresql_path }}"
     state: directory
@@ -18,31 +19,45 @@
     path: "{{ data_disk_path + postgreql_root + postgresql_path }}/pg_hba.conf"
   register: postgres_data
 
-- name: Initialise PostgreSQL if not already installed
-  tags: postgres_initdb
-  ansible.builtin.command:
-    cmd: sudo su --command 'pg_ctl initdb --pgdata={{ data_disk_path + postgresql_root + postgresql_path }}' --login postgres
-  when: not postgres_data.stat.exists
-
-- name: Set selinux postgresql permissions on postgresql root folder
-  ansible.builtin.command:
-    cmd: sudo chcon -Rt postgresql_db_t {{ data_disk_path + postgresql_root }}
-
-- name: Install service file for postgresql
-  ansible.builtin.copy:
-    src: files/postgresql-13.service
-    dest: /etc/systemd/system/postgresql-13.service
+- name: Drop in systemd override for custom path.
+  ansible.builtin.template:
+    src: files/override.conf.j2
+    dest: /etc/systemd/system/postgresql.service.d/override.conf
     owner: root
     group: root
     mode: u=rw,g=r,o=r
 
-- name: Reload systemd
+#- name: Create a random password file for the postgresql database superuser to use instead of the default
+#  ansible.buildin.command:
+#    cmd: openssl rand -base64 20 > "{{ data_disk_path + postgreql_root + postgresql_path }}/pgpass"
+
+- name: Initialise PostgreSQL if not already installed.
+  tags: postgres_initdb
+  ansible.builtin.command:
+  #  cmd: sudo su --command 'pg_ctl initdb --pgdata={{ data_disk_path + postgresql_root + postgresql_path }} --pwfile={{ data_disk_path + postgreql_root + postgresql_path }}/pgpass' --login postgres
+    cmd: postgresql-setup --initdb
+    become: yes
+  when: not postgres_data.stat.exists
+
+- name: Set selinux postgresql permissions on postgresql root folder.
+  ansible.builtin.command:
+    cmd: sudo chcon -Rt postgresql_db_t {{ data_disk_path + postgresql_root }}
+
+#- name: Install service file for postgresql
+#  ansible.builtin.copy:
+#    src: files/postgresql-16.service
+#    dest: /etc/systemd/system/postgresql-16.service
+#    owner: root
+#    group: root
+#    mode: u=rw,g=r,o=r
+
+- name: Reload systemd.
   ansible.builtin.systemd_service:
     daemon_reload: true
 
-- name: Enable and start postgresql
+- name: Enable and start postgresql.
   ansible.builtin.systemd_service:
-    name: postgresql-13
+    name: postgresql
     state: started
     enabled: true
     masked: false
